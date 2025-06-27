@@ -4,6 +4,12 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+type Post = {
+  id: number;
+  title: string;
+  body: string;
+};
+
 export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
