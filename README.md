@@ -49,6 +49,26 @@ mini-blog-frontend/
 
 ## 🧑‍💻 How to Run Locally
 
+## First clone the mini-blog-backend using
+
+### Step 1: clone backend on your local machine
+```bash
+git clone https://github.com/kudrat07/mini-blog-backend.git
+```
+
+## Step 2: Install dependencies using
+```bash
+npm install
+```
+## Step 3: Run the backend
+```bash
+npm start
+```
+
+!!! Make Sure the backend is running on PORT No. 5000
+
+## Now frontend
+
 ### ✅ Step 1: Clone the Repository
 
 ```bash
