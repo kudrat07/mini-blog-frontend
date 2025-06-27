@@ -1,69 +1,75 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 
-const API = 'https://mini-blog-backend-3g6e.onrender.com/admin/posts';
-const adminId = 'admin123'; // Simulated admin ID
+// Use deployed API in production
+// const API = 'https://mini-blog-backend-3g6e.onrender.com/admin/posts';
+const API = 'http://localhost:5000/admin/posts'
+
 
 export default function AdminPage() {
   const [posts, setPosts] = useState([]);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [editId, setEditId] = useState(null);
-  const [error, setError] = useState(null);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(API, { headers: { 'admin-id': adminId } })
+    fetch(API)
       .then(res => res.json())
-      .then(setPosts);
+      .then(setPosts)
+      .catch(() => setError('Failed to load posts'));
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!title.trim() || !body.trim()) return setError('Title and Body are required');
     if (body.trim().split(' ').length < 3) return setError('Body must have at least 3 words');
 
     const method = editId ? 'PUT' : 'POST';
     const url = editId ? `${API}/${editId}` : API;
-    const res = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'admin-id': adminId
-      },
-      body: JSON.stringify({ title, body })
-    });
 
-    if (res.ok) {
-      const updatedPost = await res.json();
-      if (editId) {
-        setPosts((prev) =>
-          prev.map((post) => (post.id === updatedPost.id ? updatedPost : post))
-        );
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, body }),
+      });
+
+      if (res.ok) {
+        const updatedPost = await res.json();
+        if (editId) {
+          setPosts(prev =>
+            prev.map(post => (post.id === updatedPost.id ? updatedPost : post))
+          );
+        } else {
+          setPosts(prev => [updatedPost, ...prev]);
+        }
+
+        setTitle('');
+        setBody('');
+        setEditId(null);
+        setError(null);
       } else {
-        setPosts((prev) => [updatedPost, ...prev]);
+        setError('Failed to submit post');
       }
-
-      setTitle('');
-      setBody('');
-      setEditId(null);
-      setError(null);
+    } catch {
+      setError('Network error while submitting post');
     }
   };
 
-  const handleDelete = async (id) => {
-    const res = await fetch(`${API}/${id}`, {
-      method: 'DELETE',
-      headers: { 'admin-id': adminId }
-    });
-
-    if (res.ok) {
-      // ✅ Instantly remove the deleted post from UI
-      setPosts((prev) => prev.filter((post) => post.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await fetch(`${API}/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setPosts(prev => prev.filter(post => post.id !== id));
+      }
+    } catch {
+      setError('Failed to delete post');
     }
   };
 
-  const handleEdit = (post) => {
+  const handleEdit = (post: { id: number; title: string; body: string }) => {
     setTitle(post.title);
     setBody(post.body);
     setEditId(post.id);
@@ -97,13 +103,17 @@ export default function AdminPage() {
       {posts.length === 0 ? (
         <p>No posts yet.</p>
       ) : (
-        posts.map(post => (
+        posts.map((post: any) => (
           <div key={post.id} className="border p-4 mb-2 rounded bg-white">
             <h3 className="font-bold">{post.title}</h3>
             <p>{post.body}</p>
             <div className="mt-2 space-x-2">
-              <button onClick={() => handleEdit(post)} className="text-blue-500">Edit</button>
-              <button onClick={() => handleDelete(post.id)} className="text-red-500">Delete</button>
+              <button onClick={() => handleEdit(post)} className="text-blue-500">
+                Edit
+              </button>
+              <button onClick={() => handleDelete(post.id)} className="text-red-500">
+                Delete
+              </button>
             </div>
           </div>
         ))
